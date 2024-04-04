@@ -1,6 +1,5 @@
 # particle.py
 import pygame
-from collision import particle_object_collision, particle_particle_collision
 
 class Particle:
     def __init__(self, x, y, color, speed, lifetime, depth, radius, gravity_factor=0, collision_enabled=True):
@@ -33,14 +32,3 @@ class Particle:
             self.y += self.speed[1]
             self.timer += 1
 
-    def handle_collisions(self, game):
-        for game_object in game.objects:
-            if self.check_collision_with_object(game_object):
-                self.x, self.y = prev_x, prev_y
-                break
-
-    def check_collision_with_object(self, game_object):
-        return particle_object_collision(self, game_object)
-
-    def check_collision_with_particle(self, other_particle):
-        return particle_particle_collision(self, other_particle)

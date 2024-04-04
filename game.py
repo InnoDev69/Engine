@@ -3,11 +3,8 @@ import time
 import traceback
 import inspect
 from sound_manager import SoundManager
-from animation import Animation
 from block import Block
-from particle import *
-from emitter import *
-from basics import *    
+from engineExtends import *    
 class Game:
     def __init__(self):
         try:
@@ -339,7 +336,7 @@ class Game:
             self.popup.activate(f"Error in 'draw_objects' func, more details:{e} {l}")
     def update_visuals(self):
         try:
-            self.fore.draw(self.screen)
+
             self.draw_objects()
             if self.show_menu:
                 self.width, self.height = self.screen.get_size()  # Actualiza las dimensiones de la ventana

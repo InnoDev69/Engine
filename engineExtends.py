@@ -1,57 +1,11 @@
 #basics.py
 import pygame
 import json
-from particle import Particle
 from object import GameObject
 import time
 import functools
 from numba import njit
 import math
-
-class Debug:
-    @staticmethod
-    def draw_debug_rect(screen, obj, color=(255, 255, 255), thickness=1):
-        if isinstance(obj, GameObject):
-            pygame.draw.rect(screen, color, obj.rect, thickness)
-        elif isinstance(obj, Particle):
-            Debug.draw_debug_circle(screen, obj, color=color, thickness=thickness)
-
-    @staticmethod
-    def draw_debug_circle(screen, particle, color=(255, 255, 255), thickness=1):
-        pygame.draw.circle(screen, color, (int(particle.x), int(particle.y)), particle.radius, thickness)
-
-    execution_times = {}
-
-    def timeit(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            start_time = time.time()
-            result = func(*args, **kwargs)
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-
-            print(f"{func.__name__} took {elapsed_time:.6f} seconds to execute.")
-
-            return result
-
-        return wrapper
-
-    def show_statistics():
-        if execution_times:
-            print("Estadísticas de tiempo de ejecución:")
-            for func_name, elapsed_time in execution_times.items():
-                print(f"{func_name}: {elapsed_time:.6f} segundos")
-        else:
-            print("No hay funciones registradas.")
-
-    def reset_statistics():
-        global execution_times
-        execution_times = {}
-        print("Estadísticas reseteadas.")
-
-    def on_f3_press():
-        show_statistics()
-
 
 class Camera:
     def __init__(self, width, height):
