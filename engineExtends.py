@@ -21,8 +21,9 @@ class Camera:
     
     def update(self):
         if self.target:
-            player_rect = self.target.get_rect()
-            self.x = player_rect.centerx - self.width / 2
+            target_rect = self.target.get_rect()
+            self.x = target_rect.centerx - self.width / 2 
+            #self.y = target_rect.centery - self.height / 1.2
 
     def apply(self, rect):
         scaled_x = (rect.x - self.x) * self.zoom
@@ -59,7 +60,6 @@ class FreeCamera(Camera):
     def apply(self, rect):
         scaled_x = (rect.x - self.x) * self.zoom
         scaled_y = (rect.y - self.y) * self.zoom
-
         return pygame.Rect(scaled_x, scaled_y, rect.width * self.zoom, rect.height * self.zoom)
     
 class UIElement:

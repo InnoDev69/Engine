@@ -1,9 +1,9 @@
 import pygame
 import time
 import traceback
+from object import Block
 import inspect
 from sound_manager import SoundManager
-from block import Block
 from engineExtends import *    
 class Game:
     def __init__(self):
@@ -13,7 +13,7 @@ class Game:
             self.screen_height = 600
             self.width = self.screen_width
             self.height = self.screen_height
-            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE, pygame.SCALED)
             self.start_time = pygame.time.get_ticks()
             pygame.display.set_caption("Game")
             self.refresh_rate = 60
@@ -23,7 +23,7 @@ class Game:
             self.popup = PopUp()
             
             self.objects=[]
-            self.entitys=[GameObject(800/2, 600/2, 50, 50, (0,255,0), None,5),GameObject(800/2, 600/2-300, 50, 50, (0,255,0), None,5),]
+            self.entitys=[GameObject(800/2, 600/2, 50, 50, (0,255,0), None),GameObject(800/2, 600/2-300, 50, 50, (0,255,0), None),]
             self.others = [Ray((400, 300), math.pi / 4, 200)]
 
             self.camera_x = 0
@@ -33,7 +33,6 @@ class Game:
             self.sound = SoundManager()
             
             self.textures = {}
-            self.initialize_textures()
             
             self.camera = Camera(self.screen_width, self.screen_height)
             self.free_camera = FreeCamera(self.screen_width, self.screen_height)
@@ -110,7 +109,7 @@ class Game:
             print("Modo de cámara libre deshabilitado. La cámara seguirá al jugador.")
             self.current_camera = self.camera
             try:
-                self.current_camera.set_target(self.player)
+                self.current_camera.set_target(self.entitys[0])
             except Exception as e:
                 print(f"Failed to set target for {e.args}")
                 self.popup.activate(f"Failed to set target for {e.args}")
@@ -129,19 +128,6 @@ class Game:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'handle_menu_click' func, more details:{e} {l}")
                         
-    def initialize_textures(self):
-        try:
-            for object in self.objects:
-                if object.texture and object.texture not in self.textures:
-                    image = pygame.image.load(object.texture)
-                    if image:
-                        image = pygame.transform.scale(image, (object.width, object.height))
-                        self.textures[object.texture] = image
-                    else:
-                        self.textures[object.texture] = object.color 
-        except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'initialize_textures' func, more details:{e} {l}")
     def can_view(self, x, y, object_width, object_height):
         try:
             w,h=self.screen.get_size()
@@ -198,7 +184,8 @@ class Game:
                     row += 1
         except Exception as e:
             l=traceback.format_exc()
-            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+            self.popup.activate(f"Error in 'load_map' func, more details:{e} {l}")
+            print(f"{e}{l}")
     def set_background(self, background_image):
         try:
             self.background_images = [
@@ -259,9 +246,18 @@ class Game:
                                 entity_list[i].velocity = 0
                         entity_list[i].velocity = 0  # Establecer la velocidad de la entidad a 0
     def run(self):
+        
         try:
+            for object in self.objects:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                object.x *= scale_x
+                object.y *= scale_y
+                object.width *= scale_x
+                object.height *= scale_y
+                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
             running = True
-            self.initialize_textures()
             chat = ""
             print(len(self.objects))
             while running:
@@ -271,15 +267,28 @@ class Game:
                 for event in pygame.event.get():
                     if event.type == pygame.VIDEORESIZE:
                         width, height = event.w, event.h
-                        self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
-                        for object in self.objects:
-                            scale_x = self.screen_width / 800
-                            scale_y = self.screen_height / 600
+                        if width <= self.screen_width and height <= self.screen_height:
+                            for object in self.objects:
+                                scale_x = self.screen_width / 1366
+                                scale_y = self.screen_height / 720
 
-                            object.x *= scale_x
-                            object.y *= scale_y
-                            object.width *= scale_x
-                            object.height *= scale_y
+                                object.x *= scale_x
+                                object.y *= scale_y
+                                object.width *= scale_x
+                                object.height *= scale_y
+                                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                        else:
+                            for object in self.objects:
+                                scale_x = self.screen_width / 1366
+                                scale_y = self.screen_height / 720
+
+                                object.x /= scale_x
+                                object.y /= scale_y
+                                object.width /= scale_x
+                                object.height /= scale_y
+                                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                        self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_F11:
                             toggle_fullscreen()
@@ -323,17 +332,13 @@ class Game:
             for object in self.objects[start_index:end_index]:
                 if self.can_view(object.x, object.y, object.width, object.height):
                     object.update()
-                    object_rect = self.current_camera.apply(pygame.Rect(object.x, object.y, object.width, object.height))
-                    texture = self.textures.get(object.texture)
-                    if texture:
-                        self.screen.blit(texture, object_rect)
-                    else:
-                        pygame.draw.rect(self.screen, object.color, object_rect)
+                    object.draw(self.screen, self.current_camera)
             for entity in self.entitys:
                 entity.draw(self.screen, self.current_camera)
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'draw_objects' func, more details:{e} {l}")
+            print(f"{e} {l}")
     def update_visuals(self):
         try:
 
@@ -385,8 +390,9 @@ class Game:
         try:
             for entity in self.entitys:
                 entity.update()
-            self.BoxCollider(self.objects, self.entitys)
             self.current_camera.update()
+            if self.current_camera.y >= -105:
+                self.current_camera.y = -105
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'update' func, more details:{e} {l}")
@@ -400,6 +406,7 @@ class Game:
             self.popup.activate(f"Error in 'render' func., more details:{e} {l}")
         #crear la consola con un text input habilitado para eso sin capacidad de moverlo
 if __name__ == "__main__":
+    global game
     game = Game()
     game.load_map("sources/map.txt")
     game.run()

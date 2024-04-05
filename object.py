@@ -2,29 +2,48 @@
 import pygame
 
 class GameObject():
-    def __init__(self, x, y, width, height, color, texture, velocity):
+    def __init__(self, x, y, width, height, color, texture):
         self.x= x
         self.y= y
         self.width= width
         self.height= height
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
-        self.texture = texture
-        self.image = pygame.Surface((width, height))  
-        self.image.fill(color)  
-        self.old_x = self.x
-        self.old_y = self.y
-        self.velocity = velocity
-        self.fvel = velocity 
+        if self.color:
+            self.surface = pygame.Surface((width, height))
+            self.surface.fill(color)
+        if texture:
+            self.texture = pygame.image.load(texture)
+            self.texture = pygame.transform.scale(self.texture, (width, height))
 
     def draw(self, screen, camera_rect=None):
-        if camera_rect:
-            rect_to_draw = self.rect.move(-camera_rect.x, -camera_rect.y)
-            screen.blit(self.image, rect_to_draw)
-        else:
-            screen.blit(self.image, self.rect)
+        dx, dy = (-camera_rect.x, -camera_rect.y) if camera_rect else (0, 0)
+        if self.color:
+            screen.blit(self.surface, self.rect.move(dx, dy))
+        elif self.texture:
+            screen.blit(self.texture, self.rect.move(dx, dy))
 
     def update(self):
-        self.y += self.velocity
+        pass
+    
+    def get_rect(self):
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+
+class Block(GameObject):
+    def __init__(self, x, y, block_type, collidable, kill=None, texture=None, color=None):
+        super().__init__(x, y, 50, 50, color, texture)
+        self.collidable = collidable
+        self.block_type = block_type
+        self.morido = kill if kill is not None else False
+
+    def check_click(self, pos):
+        if self.rect.collidepoint(pos):
+            self.is_dragging = True
+
+    def move_with_mouse(self, rel):
+        if self.is_dragging:
+            self.rect.move_ip(rel)
+
+    def update(self):
+        self.rect.x = self.x
         self.rect.y = self.y
-        
