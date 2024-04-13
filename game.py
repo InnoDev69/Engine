@@ -9,24 +9,24 @@ class Game:
     def __init__(self):
         try:
             pygame.init()
-            self.screen_width = 800
-            self.screen_height = 600
-            self.width = self.screen_width
-            self.height = self.screen_height
+            self.screen_width:int = 800
+            self.screen_height:int = 600
+            self.width:int = self.screen_width
+            self.height:int = self.screen_height
             self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE, pygame.SCALED)
             self.start_time = pygame.time.get_ticks()
             pygame.display.set_caption("Game")
-            self.refresh_rate = 60
-            self.pause = False
-            self.developer_mode = True
-            self.popup=False
+            self.refresh_rate:int = 60
+            self.pause:bool = False
+            self.developer_mode:bool = True
+            self.popup:bool =False
             self.popup = PopUp()
             
             self.objects=[]
             self.entitys=[GameObject(800/2, 600/2, 50, 50, (0,255,0), None),GameObject(800/2, 600/2-300, 50, 50, (0,255,0), None),]
-            self.others = [Ray((400, 300), math.pi / 4, 200)]
+            self.others = []
 
-            self.camera_x = 0
+            self.camera_x:int = 0
             self.white = (255, 255, 255)
             self.clock = pygame.time.Clock()
 
@@ -37,15 +37,15 @@ class Game:
             self.camera = Camera(self.screen_width, self.screen_height)
             self.free_camera = FreeCamera(self.screen_width, self.screen_height)
             self.current_camera = self.camera
-            self.free_camera_mode = False
+            self.free_camera_mode:bool = False
 
             #global
-            self.show_menu = False
-            self.show_fps = False
-            self.variable1 = False
-            self.variable2 = False
+            self.show_menu:bool = False
+            self.show_fps:bool = False
+            self.variable1:bool = False
+            self.variable2:bool = False
             self.font = pygame.font.Font(None, 36)
-            self.fullscreen = False
+            self.fullscreen:bool = False
             #colors
             self.BLACK = (0,0,0)
             self.images=("textures\\background\\background_layer1.png","textures\\background\\background_layer1.png")
@@ -245,8 +245,7 @@ class Game:
                                 entity_list[i].y = entity_list[j].rect.top - entity_list[i].height
                                 entity_list[i].velocity = 0
                         entity_list[i].velocity = 0  # Establecer la velocidad de la entidad a 0
-    def run(self):
-        
+    def reescale(self):
         try:
             for object in self.objects:
                 scale_x = self.screen_width / 1366
@@ -257,6 +256,67 @@ class Game:
                 object.width *= scale_x
                 object.height *= scale_y
                 object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+            for entity in self.entitys:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                entity.x *= scale_x
+                entity.y *= scale_y
+                entity.width *= scale_x
+                entity.height *= scale_y
+                if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
+                else:                    
+                    entity.surface = pygame.Surface((entity.width, entity.height))
+                    entity.surface.fill(entity.color)
+            for element in self.ui_elements:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                element.rect.x *= scale_x
+                element.rect.y *= scale_y
+                element.rect.width *= scale_x
+                element.rect.height *= scale_y
+        except Exception as e:
+            l=traceback.format_exc()
+            self.popup.activate(f"Error in 'reescale' func, more details:{e} {l}")
+    def donwscale(self):
+        try:
+            for object in self.objects:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                object.x /= scale_x
+                object.y /= scale_y
+                object.width /= scale_x
+                object.height /= scale_y
+                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+            for entity in self.entitys:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                entity.x /= scale_x
+                entity.y /= scale_y
+                entity.width /= scale_x
+                entity.height /= scale_y
+                if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
+                else:                    
+                    entity.surface = pygame.Surface((entity.width, entity.height))
+                    entity.surface.fill(entity.color)
+            for element in self.ui_elements:
+                scale_x = self.screen_width / 1366
+                scale_y = self.screen_height / 720
+
+                element.rect.x /= scale_x
+                element.rect.y /= scale_y
+                element.rect.width /= scale_x
+                element.rect.height /= scale_y
+        except Exception as e:
+            l=traceback.format_exc()
+            self.popup.activate(f"Error in 'downscale' func, more details:{e} {l}")
+    def run(self):
+        
+        try:
+            self.reescale()
             running = True
             chat = ""
             print(len(self.objects))
@@ -268,25 +328,9 @@ class Game:
                     if event.type == pygame.VIDEORESIZE:
                         width, height = event.w, event.h
                         if width <= self.screen_width and height <= self.screen_height:
-                            for object in self.objects:
-                                scale_x = self.screen_width / 1366
-                                scale_y = self.screen_height / 720
-
-                                object.x *= scale_x
-                                object.y *= scale_y
-                                object.width *= scale_x
-                                object.height *= scale_y
-                                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                            self.reescale()
                         else:
-                            for object in self.objects:
-                                scale_x = self.screen_width / 1366
-                                scale_y = self.screen_height / 720
-
-                                object.x /= scale_x
-                                object.y /= scale_y
-                                object.width /= scale_x
-                                object.height /= scale_y
-                                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                            self.donwscale()
                         self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
                     elif event.type == pygame.KEYDOWN:
@@ -318,13 +362,12 @@ class Game:
                 self.clock.tick(self.refresh_rate)
 
             pygame.quit()
-            sys.exit()
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
     def draw_objects(self):
         try:
-            chunk_size = 60
+            chunk_size =100
 
             start_index = max(0, int(self.current_camera.x / 50) - chunk_size)
             end_index = min(len(self.objects), int((self.current_camera.x + self.screen_width) / 50) + chunk_size)
@@ -333,7 +376,7 @@ class Game:
                 if self.can_view(object.x, object.y, object.width, object.height):
                     object.update()
                     object.draw(self.screen, self.current_camera)
-            for entity in self.entitys:
+            for entity in self.entitys[start_index:end_index]:
                 entity.draw(self.screen, self.current_camera)
         except Exception as e:
             l=traceback.format_exc()

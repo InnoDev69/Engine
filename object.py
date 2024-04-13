@@ -9,6 +9,7 @@ class GameObject():
         self.height= height
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
+        self.texture = None
         if self.color:
             self.surface = pygame.Surface((width, height))
             self.surface.fill(color)
