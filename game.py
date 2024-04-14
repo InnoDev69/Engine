@@ -260,8 +260,8 @@ class Game:
                 scale_x = self.screen_width / 1366
                 scale_y = self.screen_height / 720
 
-                entity.x *= scale_x
-                entity.y *= scale_y
+                entity.rect.x *= scale_x
+                entity.rect.y *= scale_y
                 entity.width *= scale_x
                 entity.height *= scale_y
                 if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
@@ -289,13 +289,16 @@ class Game:
                 object.y /= scale_y
                 object.width /= scale_x
                 object.height /= scale_y
-                object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                if object.texture:object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
+                else:                    
+                    object.surface = pygame.Surface((object.width, object.height))
+                    entity.surface.fill(object.color)
             for entity in self.entitys:
                 scale_x = self.screen_width / 1366
                 scale_y = self.screen_height / 720
 
-                entity.x /= scale_x
-                entity.y /= scale_y
+                entity.rect.x /= scale_x
+                entity.rect.y /= scale_y
                 entity.width /= scale_x
                 entity.height /= scale_y
                 if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
@@ -313,8 +316,39 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'downscale' func, more details:{e} {l}")
+    def handle_events(self, event):
+        try:
+            if event.type == pygame.VIDEORESIZE:
+                width, height = event.w, event.h
+                if width <= self.screen_width and height <= self.screen_height:
+                    self.reescale()
+                else:
+                    self.donwscale()
+                self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    toggle_fullscreen()
+            if event.type == pygame.QUIT:
+                self.exit = True
+            if self.developer_mode:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F3:self.on_toggle_f3()  
+                    elif event.key == pygame.K_F4:self.show_menu = not self.show_menu
+                    elif event.key == pygame.K_ESCAPE:self.pause = not self.pause
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.handle_menu_click(event)
+                elif self.free_camera_mode:self.current_camera.handle_event(event)
+                if self.show_menu:
+                    for element in self.ui_elements:
+                        if self.method_requires_argument(getattr(element, 'handle_event'), 'game'):
+                            element.handle_event(event, game)
+                        else:
+                            element.handle_event(event)
+        except Exception as e:
+            l=traceback.format_exc()
+            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
     def run(self):
-        
         try:
             self.reescale()
             running = True
@@ -322,37 +356,10 @@ class Game:
             print(len(self.objects))
             while running:
                 self.render()
-                current_time = pygame.time.get_ticks()
-                elapsed_time = (current_time - self.start_time) / 1000
                 for event in pygame.event.get():
-                    if event.type == pygame.VIDEORESIZE:
-                        width, height = event.w, event.h
-                        if width <= self.screen_width and height <= self.screen_height:
-                            self.reescale()
-                        else:
-                            self.donwscale()
-                        self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
-
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_F11:
-                            toggle_fullscreen()
                     if event.type == pygame.QUIT:
-                        self.exit = True
                         running = False
-                    if self.developer_mode:
-                        if event.type == pygame.KEYDOWN:
-                            if event.key == pygame.K_F3:self.on_toggle_f3()  
-                            elif event.key == pygame.K_F4:self.show_menu = not self.show_menu
-                            elif event.key == pygame.K_ESCAPE:self.pause = not self.pause
-                        elif event.type == pygame.MOUSEBUTTONDOWN:
-                            self.handle_menu_click(event)
-                        elif self.free_camera_mode:self.current_camera.handle_event(event)
-                        if self.show_menu:
-                            for element in self.ui_elements:
-                                if self.method_requires_argument(getattr(element, 'handle_event'), 'game'):
-                                    element.handle_event(event, game)
-                                else:
-                                    element.handle_event(event)
+                    self.handle_events(event)
                 keys = pygame.key.get_pressed()
                 self.fore.update(keys)
                 if not self.pause:
@@ -423,7 +430,6 @@ class Game:
                 self.popup.update()
             for other in self.others:
                 other.draw(self.screen)
-                other.angle +=1 / 60 
             pygame.display.update()
         except Exception as e:
             l=traceback.format_exc()
@@ -449,7 +455,6 @@ class Game:
             self.popup.activate(f"Error in 'render' func., more details:{e} {l}")
         #crear la consola con un text input habilitado para eso sin capacidad de moverlo
 if __name__ == "__main__":
-    global game
     game = Game()
     game.load_map("sources/map.txt")
     game.run()
