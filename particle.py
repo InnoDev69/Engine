@@ -1,4 +1,3 @@
-# particle.py
 import pygame
 
 class Particle:
@@ -17,7 +16,7 @@ class Particle:
     def draw(self, screen):
         adjusted_x = int(self.x - self.radius * self.depth)
         adjusted_y = int(self.y - self.radius * self.depth)
-        adjusted_radius = int(self.radius * (1 + self.depth / 10))  # Ajusta el radio basado en la profundidad
+        adjusted_radius = int(self.radius * (1 + self.depth / 10))  # Ajusta el radio que se basa en la profundidad
 
         z_position = self.y + self.depth
 

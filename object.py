@@ -1,5 +1,5 @@
-# object.py
 import pygame
+from engineExtends import Render
 
 class GameObject():
     def __init__(self, x, y, width, height, color, texture):

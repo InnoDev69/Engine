@@ -6,7 +6,8 @@ import time
 import functools
 from numba import njit
 import math
-
+class Render():
+    pass
 class Camera:
     def __init__(self, width, height):
         self.width = width
@@ -213,7 +214,7 @@ class TextInput(UIElement):
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            if self.rect.x < x < self.rect.x + self.width and self.rect.y < y < self.rect.y + self.height: #linea con error
+            if self.rect.x < x < self.rect.x + self.width and self.rect.y < y < self.rect.y + self.height: 
                 self.is_active = True
             else:
                 self.is_active = False

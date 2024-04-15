@@ -61,7 +61,7 @@ class Game:
                 background_color=(0, 0, 0),
                 element_id="text_input_1",  # Un identificador único para este elemento
                 json_file="data/positions.json",
-                draggable=self.developer_mode # El archivo JSON donde se guardarán las posiciones
+                draggable=self.developer_mode 
             ),
             TextBlock(
                         x=20,
@@ -245,7 +245,7 @@ class Game:
                                 entity_list[i].y = entity_list[j].rect.top - entity_list[i].height
                                 entity_list[i].velocity = 0
                         entity_list[i].velocity = 0  # Establecer la velocidad de la entidad a 0
-    def reescale(self):
+    def reescale(self)->None:
         try:
             for object in self.objects:
                 scale_x = self.screen_width / 1366
@@ -279,7 +279,7 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'reescale' func, more details:{e} {l}")
-    def donwscale(self):
+    def donwscale(self)->None:
         try:
             for object in self.objects:
                 scale_x = self.screen_width / 1366
@@ -316,7 +316,7 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'downscale' func, more details:{e} {l}")
-    def handle_events(self, event):
+    def handle_events(self, event)->None:
         try:
             if event.type == pygame.VIDEORESIZE:
                 width, height = event.w, event.h
@@ -348,6 +348,33 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+    def draw_menu(self)->None:
+        try:
+            self.width, self.height = self.screen.get_size()  # Actualiza las dimensiones de la ventana
+
+            pygame.draw.rect(self.screen, (200, 200, 200), (self.width - 150, 0, 150, self.height))
+
+            checkbox1_rect = pygame.Rect(self.width - 140, 20, 20, 20)
+            pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect, 2)
+            if self.variable1:
+                pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect)
+
+            checkbox2_rect = pygame.Rect(self.width - 140, 170, 20, 20)
+            pygame.draw.rect(self.screen, self.BLACK, checkbox2_rect, 2)
+            if self.variable2:
+                pygame.draw.rect(self.screen, self.BLACK, checkbox2_rect)
+
+            checkbox_fps_rect = pygame.Rect(self.width - 140, 320, 20, 20)
+            pygame.draw.rect(self.screen, self.BLACK, checkbox_fps_rect, 2)
+            if self.show_fps:
+                pygame.draw.rect(self.screen, self.BLACK, checkbox_fps_rect)
+
+            # Render FPS text
+            fps_text = self.font.render("Show FPS", True, self.BLACK)
+            self.screen.blit(fps_text, (self.width - 140, 290))
+        except Exception as e:
+            l=traceback.format_exc()
+            self.popup.activate(f"Error in 'draw_menu' func, more details:{e} {l}")
     def run(self):
         try:
             self.reescale()
@@ -394,29 +421,7 @@ class Game:
 
             self.draw_objects()
             if self.show_menu:
-                self.width, self.height = self.screen.get_size()  # Actualiza las dimensiones de la ventana
-
-                pygame.draw.rect(self.screen, (200, 200, 200), (self.width - 150, 0, 150, self.height))
-
-                checkbox1_rect = pygame.Rect(self.width - 140, 20, 20, 20)
-                pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect, 2)
-                if self.variable1:
-                    pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect)
-
-                checkbox2_rect = pygame.Rect(self.width - 140, 170, 20, 20)
-                pygame.draw.rect(self.screen, self.BLACK, checkbox2_rect, 2)
-                if self.variable2:
-                    pygame.draw.rect(self.screen, self.BLACK, checkbox2_rect)
-
-                checkbox_fps_rect = pygame.Rect(self.width - 140, 320, 20, 20)
-                pygame.draw.rect(self.screen, self.BLACK, checkbox_fps_rect, 2)
-                if self.show_fps:
-                    pygame.draw.rect(self.screen, self.BLACK, checkbox_fps_rect)
-
-                # Render FPS text
-                fps_text = self.font.render("Show FPS", True, self.BLACK)
-                self.screen.blit(fps_text, (self.width - 140, 290))
-                
+                self.draw_menu()            
             # Display FPS if enabled
             for element in self.ui_elements:
                 if element.element_id == "fps_text" and self.show_fps:

@@ -11,8 +11,8 @@ class SoundManager:
 
     def play(self, sound_name):
         if sound_name in this.sounds:
-            this.sounds[sound_name].play()
+            self.sounds[sound_name].play()
 
     def stop(self, sound_name):
         if sound_name in this.sounds:
-            this.sounds[sound_name].stop()
+            self.sounds[sound_name].stop()
