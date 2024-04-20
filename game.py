@@ -1,7 +1,7 @@
 import pygame
 import time
 import traceback
-from object import Block
+from object import *
 import inspect
 from sound_manager import SoundManager
 from engineExtends import *    
@@ -61,7 +61,8 @@ class Game:
                 background_color=(0, 0, 0),
                 element_id="text_input_1",  # Un identificador único para este elemento
                 json_file="data/positions.json",
-                draggable=self.developer_mode 
+                draggable=self.developer_mode,
+                type="menu"
             ),
             TextBlock(
                         x=20,
@@ -74,7 +75,8 @@ class Game:
                         draw_background=False,
                         element_id="fps_text",  
                         json_file="data/positions.json",
-                        draggable=self.developer_mode
+                        draggable=self.developer_mode,
+                        type="menu"
                     ),
             TextBlock(
                         x=20,
@@ -87,9 +89,11 @@ class Game:
                         draw_background=False,
                         element_id="chat_text",  
                         json_file="data/positions.json",
-                        draggable=self.developer_mode
+                        draggable=self.developer_mode,
+                        type="menu"
                     ),
-            Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode)]
+            
+            Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode,type="menu")]
             
         except Exception as e:
             l=traceback.format_exc()
@@ -392,6 +396,7 @@ class Game:
                 if not self.pause:
                     self.update(keys, event)
                     #######################
+
                     # Todo codigo aqui, la logica principal debe ir aqui
                 self.clock.tick(self.refresh_rate)
 
@@ -408,7 +413,7 @@ class Game:
 
             for object in self.objects[start_index:end_index]:
                 if self.can_view(object.x, object.y, object.width, object.height):
-                    object.update()
+                    #object.update()
                     object.draw(self.screen, self.current_camera)
             for entity in self.entitys[start_index:end_index]:
                 entity.draw(self.screen, self.current_camera)
@@ -428,7 +433,9 @@ class Game:
                     element.update_content()
                     element.update(f"{self.clock.get_fps()}")
                     element.draw(self.screen)
-                if self.show_menu and not element.element_id == "fps_text":
+                elif self.show_menu and not element.element_id == "fps_text":
+                    element.draw(self.screen)
+                elif not element.herarchy=="menu":
                     element.draw(self.screen)
             if self.popup.isactive:
                 self.popup.draw_popup(self.screen)
@@ -444,6 +451,8 @@ class Game:
         try:
             for entity in self.entitys:
                 entity.update()
+            for obj in self.objects:
+                obj.update() 
             self.current_camera.update()
             if self.current_camera.y >= -105:
                 self.current_camera.y = -105
@@ -458,7 +467,6 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'render' func., more details:{e} {l}")
-        #crear la consola con un text input habilitado para eso sin capacidad de moverlo
 if __name__ == "__main__":
     game = Game()
     game.load_map("sources/map.txt")

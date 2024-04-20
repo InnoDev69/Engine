@@ -1,13 +1,11 @@
 #basics.py
 import pygame
 import json
-from object import GameObject
 import time
 import functools
 from numba import njit
 import math
-class Render():
-    pass
+
 class Camera:
     def __init__(self, width, height):
         self.width = width
@@ -62,15 +60,33 @@ class FreeCamera(Camera):
         scaled_x = (rect.x - self.x) * self.zoom
         scaled_y = (rect.y - self.y) * self.zoom
         return pygame.Rect(scaled_x, scaled_y, rect.width * self.zoom, rect.height * self.zoom)
-    
+class Render():
+    def draw(self, screen,camera_rect=None):
+        dx, dy = (-camera_rect.x, -camera_rect.y) if camera_rect else (0, 0)
+        if self.color:
+            screen.blit(self.surface, self.rect.move(dx, dy))
+        elif self.texture:
+            screen.blit(self.texture, self.rect.move(dx, dy))
+    def set_animations(self, frame_dict, animation_name):
+        self.animations[animation_name] = frame_dict
+    def start_animation(self, animation_name):
+        """
+        Inicia una animación específica.
+        """
+        if animation_name in self.animations:
+            self.current_animation = animation_name
+        else:
+            print(f"La animación '{animation_name}' no existe.")
+
 class UIElement:
-    def __init__(self, x, y, width, height, element_id, json_file, draggable=False):
+    def __init__(self, x, y, width, height, element_id, json_file, draggable=False, type=None):
         self.rect = pygame.Rect(x, y, width, height)
         self.is_dragging = False
         self.element_id = element_id
         self.json_file = json_file
         self.load_positions_from_json()
         self.draggable = draggable
+        self.herarchy = type
 
     def draw(self, screen):
         pass
@@ -99,7 +115,7 @@ class UIElement:
             with open(self.json_file, 'r') as json_file:
                 positions_data = json.load(json_file)
         except FileNotFoundError:
-            pass
+            print("No se especifica archivo")
 
         positions_data[self.element_id] = {
             "x": self.rect.x,
@@ -111,17 +127,18 @@ class UIElement:
 
     def load_positions_from_json(self):
         try:
-            with open(self.json_file, 'r') as json_file:
-                positions_data = json.load(json_file)
-                element_data = positions_data.get(self.element_id, {})
-                self.rect.x = element_data.get("x", self.rect.x)
-                self.rect.y = element_data.get("y", self.rect.y)
+            if self.json_file:
+                with open(self.json_file, 'r') as json_file:
+                    positions_data = json.load(json_file)
+                    element_data = positions_data.get(self.element_id, {})
+                    self.rect.x = element_data.get("x", self.rect.x)
+                    self.rect.y = element_data.get("y", self.rect.y)
         except FileNotFoundError:
-            pass
+            print("ads")
 
 class TextBlock(UIElement):
-    def __init__(self, x, y, width, height, text="", font_size=20, font_color=(255, 255, 255), max_chars=None, draw_background=True, element_id=None, json_file=None, draggable=False):
-        super().__init__(x, y, width, height, element_id, json_file, draggable)
+    def __init__(self, x, y, width, height, text="", font_size=20, font_color=(255, 255, 255), max_chars=None, draw_background=True, element_id=None, json_file=None, draggable=False, type=None):
+        super().__init__(x, y, width, height, element_id, json_file, draggable, type)
         self.text = text
         self.font_size = font_size
         self.font_color = font_color
@@ -196,8 +213,8 @@ class TextBlock(UIElement):
             current_y += image.get_rect().height
 
 class TextInput(UIElement):
-    def __init__(self, text="", position=(0, 0), font_size=30, width=200, height=40, color=(255, 255, 255), background_color=(0, 0, 0), element_id=None, json_file=None, draggable=False):
-        super().__init__(position[0], position[1], width, height, element_id, json_file, draggable)
+    def __init__(self, text="", position=(0, 0), font_size=30, width=200, height=40, color=(255, 255, 255), background_color=(0, 0, 0), element_id=None, json_file=None, draggable=False, type=None):
+        super().__init__(position[0], position[1], width, height, element_id, json_file, draggable, type)
         self.text = text
         self.position = position
         self.font_size = font_size
@@ -267,8 +284,8 @@ class PopUp():
         if self.isactive and time.time() - self.activation_time > 5:
             self.isactive = False
 class Button(UIElement):
-    def __init__(self, x, y, width, height, element_id, json_file, color=(255, 255, 255), opacity=127, image=None, font=None, font_size=32, text_position='center', action=None, text='', text_color=(0,0,0), draggable=False):
-        super().__init__(x, y, width, height, element_id, json_file, draggable)
+    def __init__(self, x, y, width, height, element_id, json_file, color=(255, 255, 255), opacity=127, image=None, font=None, font_size=32, text_position='center', action=None, text='', text_color=(0,0,0), draggable=False, type=None):
+        super().__init__(x, y, width, height, element_id, json_file, draggable, type)
         self.color = color
         self.opacity = opacity
         self.image = pygame.image.load(image) if image else None

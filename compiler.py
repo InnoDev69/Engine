@@ -14,9 +14,6 @@ def compilar_y_mover(input_path, output_folder):
 
         subprocess.run(command, shell=True)
 
-        compiled_file = os.path.join("dist", os.path.basename(input_path).replace(".py", ".exe"))
-
-        shutil.copy2(compiled_file, output_folder)
 
         print(f"Compilación exitosa. Archivo copiado a: {output_folder}")
 
@@ -26,6 +23,6 @@ def compilar_y_mover(input_path, output_folder):
 script_name = input("Ingresa nombre del script:")
 
 archivo_input = script_name
-carpeta_output = "E:\\Descargas\\hwmonitor_1.51\\a\\sources"
+carpeta_output = "E:\\Engine"
 
 compilar_y_mover(archivo_input, carpeta_output)
