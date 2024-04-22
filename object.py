@@ -2,17 +2,19 @@ import pygame
 from engineExtends import Render
 
 class GameObject(Render):
-    def __init__(self, x, y, width, height, color, texture, velocity=None):
+    def __init__(self, x, y, width, height, color, texture,typeObj, velocity=None):
         self.x= x
         self.y= y
         self.width= width
         self.height= height
         self.rect = pygame.Rect(x, y, width, height)
+        self.typeObj = typeObj
         self.velocity = velocity
         self.color = color
         self.texture = None
         self.animations={}
         self.is_dragging=False
+ 
         if self.color:
             self.surface = pygame.Surface((width, height))
             self.surface.fill(color)
@@ -26,8 +28,8 @@ class GameObject(Render):
 
 
 class Block(GameObject):
-    def __init__(self, x, y, block_type, collidable, kill=None, texture=None, color=None):
-        super().__init__(x, y, 51, 51, color, texture)
+    def __init__(self, x, y, block_type, collidable, typeObj, kill=None, texture=None, color=None):
+        super().__init__(x, y, 51, 51, color, texture, typeObj)
         self.collidable = collidable
         self.velocity = 0
         self.block_type = block_type

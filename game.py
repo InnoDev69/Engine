@@ -8,6 +8,11 @@ from engineExtends import *
 class Game:
     def __init__(self):
         try:
+            # The above code is initializing a Pygame window with a screen size of 800x600 pixels. It
+            # sets up various attributes such as screen width, screen height, refresh rate, developer
+            # mode, and initializes a clock for controlling the frame rate. It also creates a PopUp
+            # object and initializes lists for objects, entities, and others. Additionally, it sets up
+            # a camera position and defines a white color tuple.
             pygame.init()
             self.screen_width:int = 800
             self.screen_height:int = 600
@@ -23,34 +28,54 @@ class Game:
             self.popup = PopUp()
             
             self.objects=[]
-            self.entitys=[GameObject(800/2, 0, 51, 51, (0,255,0), None, 5),]#example
+            self.entitys=[GameObject(800/2, 0, 51, 51, (0,255,0), None,"Block", 5)]#example
             self.others = []
 
             self.camera_x:int = 0
             self.white = (255, 255, 255)
             self.clock = pygame.time.Clock()
 
+            # The above code is creating an instance of the `SoundManager` class and assigning it to
+            # the `sound` attribute of the current object (assuming this code is inside a class
+            # definition).
             self.sound = SoundManager()
             
-            self.textures = {}
-            
+            # The above code snippet is setting up camera objects for a game or simulation. It creates
+            # a `Camera` object and a `FreeCamera` object with the specified screen width and height.
+            # It then sets the `current_camera` to be the `Camera` object and initializes a boolean
+            # variable `free_camera_mode` to `False`. This code suggests that the program has two
+            # camera modes - a regular camera mode and a free camera mode, with the ability to switch
+            # between them.
             self.camera = Camera(self.screen_width, self.screen_height)
             self.free_camera = FreeCamera(self.screen_width, self.screen_height)
             self.current_camera = self.camera
             self.free_camera_mode:bool = False
 
-            #global
+            # The above code snippet is written in Python and it seems to be defining some boolean
+            # variables and initializing them to False. These variables are `show_menu`, `show_fps`,
+            # `hitboxes`, `variable2`, and `fullscreen`. Additionally, a font object is created using
+            # `pygame.font.Font` with a font size of 36.
             self.show_menu:bool = False
             self.show_fps:bool = False
             self.hitboxes:bool = False
             self.variable2:bool = False
             self.font = pygame.font.Font(None, 36)
             self.fullscreen:bool = False
-            #colors
+
+            # The above code snippet in Python is defining a class attribute `BLACK` with the RGB
+            # value (0, 0, 0), which represents the color black. It is also defining another attribute
+            # `images` as a tuple containing two file paths to image files. Finally, it is creating an
+            # instance of the `Parallax` class with the specified images and the `screen` attribute of
+            # the current object.
             self.BLACK = (0,0,0)
             self.images=("textures\\background\\background_layer1.png","textures\\background\\background_layer1.png")
             self.fore = Parallax(self.images, self.screen)
-            #asd
+
+            # The above code is creating a list of UI elements for a graphical user interface (GUI) in
+            # a Python application. The UI elements include TextInput, TextBlock, and Button objects
+            # with various properties such as position, size, text content, font size, colors, element
+            # IDs, JSON file paths, draggability, and types. These elements are being initialized with
+            # specific configurations to be displayed on the GUI interface.
             self.ui_elements=[TextInput(
                 text="",
                 position=(50, 50),
@@ -108,6 +133,9 @@ class Game:
                     ),
             Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode,type="menu")]
             
+            # The above code is creating an instance of a `PhysicsEngine` class and assigning it to
+            # the `engine_physics` attribute of the current object (assuming this code is inside a
+            # class definition).
             self.engine_physics = PhysicsEngine()
         except Exception as e:
             l=traceback.format_exc()
@@ -183,20 +211,20 @@ class Game:
                         elif char == '1':
                             block_type = int(char)
                             block = Block(col * 50, row * 50, block_type, True, texture="textures/bricks.png", color=None,
-                                        kill=False)
+                                        kill=False, typeObj="Block")
                             self.objects.append(block)
                         elif char == '2':
                             block_type = int(char)
-                            block = Block(col * 50, row * 50, block_type, True, texture=None, color=None, kill=True)
+                            block = Block(col * 50, row * 50, block_type, True, texture=None, color=None, kill=True, typeObj="Block")
                             self.objects.append(block)
                         elif char == '3':
                             block_type = int(char)
                             block = Block(col * 50, row * 50, block_type, True, texture="textures/floor.png", color=None,
-                                        kill=False)
+                                        kill=False, typeObj="Block")
                             self.objects.append(block)
                         else:
                             block_type = int(char)
-                            block = Block(col * 50, row * 50, block_type, False, texture=None, color=None, kill=False)
+                            block = Block(col * 50, row * 50, block_type, False, texture=None, color=None, kill=False, typeObj="Block")
                         col += 1
                     row += 1
         except Exception as e:
@@ -214,55 +242,7 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
-    def BoxCollider(self, object_list, entity_list):
-        for obj in object_list:
-            for entity in entity_list:
-                if obj.rect.colliderect(entity.rect):
-                
-                    dx = entity.rect.centerx - obj.rect.centerx 
-                    dy = entity.rect.centery - obj.rect.centery 
-
-                    if abs(dx) > abs(dy):
-                        if dx > 0:
-                            entity.x = entity.rect.right
-                            entity.velocity = 0
-                        else:
-                            entity.x = entity.rect.left - obj.width
-                            entity.velocity = 0
-                    else:
-                        if dy > 0:
-                            entity.y = obj.rect.bottom
-                            entity.velocity = 0
-                        else:
-                            entity.y = obj.rect.top - entity.height
-                            entity.velocity = 0
-
-                else:
-                    entity.velocity = entity.fvel
-                    
-        if False:
-            for i in range(len(entity_list)):
-                for j in range(i+1, len(entity_list)):
-                    if entity_list[i].rect.colliderect(entity_list[j].rect):
-                   
-                        dx = entity_list[j].rect.centerx - entity_list[i].rect.centerx
-                        dy = entity_list[j].rect.centery - entity_list[i].rect.centery
-
-                        if abs(dx) > abs(dy):
-                            if dx > 0:
-                                entity_list[i].x = entity_list[j].rect.right
-                                entity_list[i].velocity = 0
-                            else:
-                                entity_list[i].x = entity_list[j].rect.left - entity_list[i].width
-                                entity_list[i].velocity = 0
-                        else:
-                            if dy > 0:
-                                entity_list[i].y = entity_list[j].rect.bottom
-                                entity_list[i].velocity = 0
-                            else:
-                                entity_list[i].y = entity_list[j].rect.top - entity_list[i].height
-                                entity_list[i].velocity = 0
-                        entity_list[i].velocity = 0  # Establecer la velocidad de la entidad a 0
+            
     def reescale(self)->None:
         try:
             scale_x = self.screen_width / 1360
@@ -274,7 +254,6 @@ class Game:
                 object.rect.y *= scale_y
                 object.rect.width = round(object.rect.width * scale_x)
                 object.rect.height = round(object.rect.height * scale_y)
-                print(object.rect.width, object.rect.height, "a")
                 object.width *= scale_x
                 object.height *= scale_y
                 object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
@@ -311,8 +290,6 @@ class Game:
                 object.rect.width = round(object.rect.width / scale_x)
                 object.rect.height = round(object.rect.height / scale_y)
 
-                print(object.rect.width / scale_x,
-                object.rect.height / scale_y)
                 object.x /= scale_x
                 object.y /= scale_y
                 object.width /= scale_x
