@@ -42,7 +42,7 @@ class Game:
             #global
             self.show_menu:bool = False
             self.show_fps:bool = False
-            self.variable1:bool = False
+            self.hitboxes:bool = False
             self.variable2:bool = False
             self.font = pygame.font.Font(None, 36)
             self.fullscreen:bool = False
@@ -136,7 +136,7 @@ class Game:
             if self.show_menu:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 if self.width - 150 <= mouse_x <= self.width and 0 <= mouse_y <= 120:
-                    self.variable1 = not self.variable1
+                    self.hitboxes = not self.hitboxes
                 elif self.width - 150 <= mouse_x <= self.width and 150 <= mouse_y <= 270:
                     self.variable2 = not self.variable2
                 elif self.width - 150 <= mouse_x <= self.width and 300 <= mouse_y <= 420:
@@ -384,7 +384,7 @@ class Game:
 
             checkbox1_rect = pygame.Rect(self.width - 140, 20, 20, 20)
             pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect, 2)
-            if self.variable1:
+            if self.hitboxes:
                 pygame.draw.rect(self.screen, self.BLACK, checkbox1_rect)
 
             checkbox2_rect = pygame.Rect(self.width - 140, 170, 20, 20)
@@ -410,6 +410,7 @@ class Game:
             chat = ""
             print(len(self.objects))
             while running:
+                dt = self.clock.tick(60) / 1000 #Utilizar para obtener un movimiento independientemente de la velocidad de los fotogramas
                 self.render()
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -420,7 +421,6 @@ class Game:
                 if not self.pause:
                     self.update(keys, event)
                     #######################
-                    print(f"x:{self.entitys[0].rect.x} y:{self.entitys[0].rect.y}", end="\r")
                     # Todo codigo aqui, la logica principal debe ir aqui
                 self.clock.tick(self.refresh_rate)
 
@@ -429,12 +429,10 @@ class Game:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
     def draw_rects_and_lines(self,screen, obj, camera):
-        color = (255, 255, 255)  # Color blanco
+        color = (255, 255, 255) 
 
-        # Ajustar la posición del objeto por la posición de la cámara
         adjusted_rect = obj.rect.move(-camera.x, -camera.y)
 
-        # Dibujar el rectángulo del objeto en blanco
         pygame.draw.rect(screen, color, adjusted_rect, 2)
 
     def draw_objects(self):
@@ -448,10 +446,10 @@ class Game:
                 if self.can_view(object.x, object.y, object.width, object.height):
                     #object.update()
                     object.draw(self.screen, self.current_camera)
-                    self.draw_rects_and_lines(self.screen, object, self.current_camera)
+                    if self.hitboxes:self.draw_rects_and_lines(self.screen, object, self.current_camera)
             for entity in self.entitys[start_index:end_index]:
                 entity.draw(self.screen, self.current_camera)
-                self.draw_rects_and_lines(self.screen, entity, self.current_camera)
+                if self.hitboxes:self.draw_rects_and_lines(self.screen, entity, self.current_camera)
 
         except Exception as e:
             l=traceback.format_exc()
