@@ -23,7 +23,7 @@ class Game:
             self.popup = PopUp()
             
             self.objects=[]
-            self.entitys=[GameObject(800/2, 600/2, 50, 50, (0,255,0), None),GameObject(800/2, 600/2-300, 50, 50, (0,255,0), None),]
+            self.entitys=[GameObject(800/2, 0, 51, 51, (0,255,0), None, 5),]#example
             self.others = []
 
             self.camera_x:int = 0
@@ -92,13 +92,26 @@ class Game:
                         draggable=self.developer_mode,
                         type="menu"
                     ),
-            
+            TextBlock(
+                        x=20,
+                        y=20,
+                        width=200,
+                        height=50,
+                        text=f"",
+                        font_size=24,
+                        font_color=(255,255,255),
+                        draw_background=False,
+                        element_id="info",  
+                        json_file="data/positions.json",
+                        draggable=self.developer_mode,
+                        type="menu"
+                    ),
             Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode,type="menu")]
             
+            self.engine_physics = PhysicsEngine()
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error en constructor:{e.args} {l}")
-
             
     def method_requires_argument(self,method, arg_name):
         sig = inspect.signature(method)
@@ -190,6 +203,7 @@ class Game:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'load_map' func, more details:{e} {l}")
             print(f"{e}{l}")
+    
     def set_background(self, background_image):
         try:
             self.background_images = [
@@ -251,21 +265,25 @@ class Game:
                         entity_list[i].velocity = 0  # Establecer la velocidad de la entidad a 0
     def reescale(self)->None:
         try:
+            scale_x = self.screen_width / 1360
+            scale_y = self.screen_height / 720
             for object in self.objects:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
-
                 object.x *= scale_x
                 object.y *= scale_y
+                object.rect.x *= scale_x
+                object.rect.y *= scale_y
+                object.rect.width = round(object.rect.width * scale_x)
+                object.rect.height = round(object.rect.height * scale_y)
+                print(object.rect.width, object.rect.height, "a")
                 object.width *= scale_x
                 object.height *= scale_y
                 object.texture = pygame.transform.scale(object.texture, (object.width, object.height))
             for entity in self.entitys:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
 
                 entity.rect.x *= scale_x
                 entity.rect.y *= scale_y
+                entity.rect.width = round(entity.rect.width * scale_x)
+                entity.rect.height = round(entity.rect.height * scale_y)
                 entity.width *= scale_x
                 entity.height *= scale_y
                 if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
@@ -273,22 +291,28 @@ class Game:
                     entity.surface = pygame.Surface((entity.width, entity.height))
                     entity.surface.fill(entity.color)
             for element in self.ui_elements:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
 
                 element.rect.x *= scale_x
                 element.rect.y *= scale_y
                 element.rect.width *= scale_x
                 element.rect.height *= scale_y
+
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'reescale' func, more details:{e} {l}")
     def donwscale(self)->None:
         try:
+            scale_x = self.screen_width / 1360
+            scale_y = self.screen_height / 720
             for object in self.objects:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
+                
+                object.rect.x /= scale_x
+                object.rect.y /= scale_y
+                object.rect.width = round(object.rect.width / scale_x)
+                object.rect.height = round(object.rect.height / scale_y)
 
+                print(object.rect.width / scale_x,
+                object.rect.height / scale_y)
                 object.x /= scale_x
                 object.y /= scale_y
                 object.width /= scale_x
@@ -298,11 +322,12 @@ class Game:
                     object.surface = pygame.Surface((object.width, object.height))
                     entity.surface.fill(object.color)
             for entity in self.entitys:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
 
                 entity.rect.x /= scale_x
                 entity.rect.y /= scale_y
+                entity.rect.width = round(entity.rect.width / scale_x)
+                entity.rect.height = round(entity.rect.height / scale_y)
+
                 entity.width /= scale_x
                 entity.height /= scale_y
                 if entity.texture:entity.texture = pygame.transform.scale(entity.texture, (entity.width, entity.height))
@@ -310,13 +335,12 @@ class Game:
                     entity.surface = pygame.Surface((entity.width, entity.height))
                     entity.surface.fill(entity.color)
             for element in self.ui_elements:
-                scale_x = self.screen_width / 1366
-                scale_y = self.screen_height / 720
 
                 element.rect.x /= scale_x
                 element.rect.y /= scale_y
                 element.rect.width /= scale_x
                 element.rect.height /= scale_y
+
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'downscale' func, more details:{e} {l}")
@@ -396,7 +420,7 @@ class Game:
                 if not self.pause:
                     self.update(keys, event)
                     #######################
-
+                    print(f"x:{self.entitys[0].rect.x} y:{self.entitys[0].rect.y}", end="\r")
                     # Todo codigo aqui, la logica principal debe ir aqui
                 self.clock.tick(self.refresh_rate)
 
@@ -404,6 +428,15 @@ class Game:
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+    def draw_rects_and_lines(self,screen, obj, camera):
+        color = (255, 255, 255)  # Color blanco
+
+        # Ajustar la posición del objeto por la posición de la cámara
+        adjusted_rect = obj.rect.move(-camera.x, -camera.y)
+
+        # Dibujar el rectángulo del objeto en blanco
+        pygame.draw.rect(screen, color, adjusted_rect, 2)
+
     def draw_objects(self):
         try:
             chunk_size =100
@@ -415,8 +448,11 @@ class Game:
                 if self.can_view(object.x, object.y, object.width, object.height):
                     #object.update()
                     object.draw(self.screen, self.current_camera)
+                    self.draw_rects_and_lines(self.screen, object, self.current_camera)
             for entity in self.entitys[start_index:end_index]:
                 entity.draw(self.screen, self.current_camera)
+                self.draw_rects_and_lines(self.screen, entity, self.current_camera)
+
         except Exception as e:
             l=traceback.format_exc()
             self.popup.activate(f"Error in 'draw_objects' func, more details:{e} {l}")
@@ -433,10 +469,12 @@ class Game:
                     element.update_content()
                     element.update(f"{self.clock.get_fps()}")
                     element.draw(self.screen)
+
                 elif self.show_menu and not element.element_id == "fps_text":
                     element.draw(self.screen)
                 elif not element.herarchy=="menu":
                     element.draw(self.screen)
+
             if self.popup.isactive:
                 self.popup.draw_popup(self.screen)
                 self.popup.update()
@@ -449,6 +487,7 @@ class Game:
 
     def update(self, keys, event):
         try:
+            self.engine_physics.handle_collisions(self.entitys,self.objects)
             for entity in self.entitys:
                 entity.update()
             for obj in self.objects:

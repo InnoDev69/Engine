@@ -245,9 +245,13 @@ class TextInput(UIElement):
         if event.type == pygame.KEYDOWN and self.developer_mode:
             if event.key == pygame.K_RETURN: 
                 if self.text.startswith('-'):
-                    exec(self.text.lstrip('-'))
-                    game.ui_elements[2].add_line("Accion realizada.")
-                    self.text = ''
+                    try:
+                        exec(self.text.lstrip('-'))
+                        game.ui_elements[2].add_line("Accion realizada.")
+                        self.text = ''
+                    except Exception as e:
+                        print(f"Failed to set target for {e.args}")
+                        game.popup.activate(f"Failed to set target for {e.args}")
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.background_color, (self.rect.x, self.rect.y, self.width, self.height))
@@ -401,3 +405,103 @@ class Ray:
             if pygame.Rect(obstacle).colliderect(pygame.Rect(self.origin[0], self.origin[1], end[0], end[1])):
                 return True
         return False
+"""
+    Beta test ver 1.2
+"""
+class Matrix2D:
+    def __init__(self, rows, cols, x, y, width, height):
+        self.rows = rows
+        self.cols = cols
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.grid = [[None for _ in range(cols)] for _ in range(rows)]
+        self.background_color = None
+        self.cell_backgrounds = [[None for _ in range(cols)] for _ in range(rows)]
+
+    def set_background_color(self, color):
+        self.background_color = color
+
+    def set_cell_background(self, row, col, background):
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.cell_backgrounds[row][col] = background
+
+    def add_element(self, row, col, element):
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.grid[row][col] = element
+
+    def remove_element(self, row, col):
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.grid[row][col] = None
+
+    def draw(self, screen):
+        # Draw background color
+        if self.background_color is not None:
+            screen.fill(self.background_color, (self.x, self.y, self.width, self.height))
+        # Draw cell backgrounds
+        cell_width = self.width / self.cols
+        cell_height = self.height / self.rows
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if self.cell_backgrounds[row][col] is not None:
+                    pygame.draw.rect(screen, self.cell_backgrounds[row][col],
+                                     (self.x + col * cell_width, self.y + row * cell_height, cell_width, cell_height))
+        # Draw grid elements
+        for row in range(self.rows):
+            for col in range(self.cols):
+                element = self.grid[row][col]
+                if element is not None:
+                    if isinstance(element, pygame.Surface):  # Check if element is an image
+                        scaled_image = pygame.transform.scale(element, (int(cell_width), int(cell_height)))
+                        screen.blit(scaled_image, (self.x + col * cell_width, self.y + row * cell_height))
+                    elif isinstance(element, tuple) and len(element) == 3:  # Check if element is a color tuple
+                        pygame.draw.rect(screen, element,
+                                         (self.x + col * cell_width, self.y + row * cell_height, cell_width, cell_height))
+
+    def get_clicked_cell(self, mouse_pos):
+        x, y = mouse_pos
+        col = (x - self.x) // (self.width / self.cols)
+        row = (y - self.y) // (self.height / self.rows)
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            return row, col
+        else:
+            return None
+
+class PhysicsEngine:
+    def __init__(self):
+        pass
+
+    def check_collision(self, obj1, obj2):
+        # Verificar si hay colisión entre dos objetos
+        return obj1.rect.colliderect(obj2.rect)
+
+    def handle_collisions(self, objects_list1, objects_list2):
+        # Manejar colisiones entre las dos listas de objetos
+        for obj1 in objects_list1:
+            for obj2 in objects_list2:
+                if self.check_collision(obj1, obj2):
+                    #print("Colisión detectada entre", obj1, "y", obj2)
+                    self.resolve_collision(obj1, obj2)
+
+    def resolve_collision(self, obj1, obj2):
+        # Manejar la resolución de colisiones entre dos objetos
+        dx = obj1.rect.x - obj2.rect.x
+        dy = obj1.rect.y - obj2.rect.y
+
+        if abs(dx) > abs(dy):
+            # Colisión horizontal
+            if dx > 0:
+                # obj1 chocó con el lado derecho de obj2
+                obj1.rect.x = obj2.rect.x + obj2.rect.width
+            else:
+                # obj1 chocó con el lado izquierdo de obj2
+                obj1.rect.x = obj2.rect.x - obj1.rect.width
+        else:
+            # Colisión vertical
+            if dy > 0:
+                # obj1 chocó con la parte inferior de obj2
+                obj1.rect.y = obj2.rect.y + obj2.rect.height
+            else:
+                # obj1 chocó con la parte superior de obj2
+                obj1.rect.y = obj2.rect.y - obj1.rect.height
