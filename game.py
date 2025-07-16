@@ -1,82 +1,49 @@
 import pygame
-import time
 import traceback
-from object import *
 import inspect
+from object import *
 from sound_manager import SoundManager
-from engineExtends import *    
+from engineExtends import *
+
 class Game:
     def __init__(self):
         try:
-            # The above code is initializing a Pygame window with a screen size of 800x600 pixels. It
-            # sets up various attributes such as screen width, screen height, refresh rate, developer
-            # mode, and initializes a clock for controlling the frame rate. It also creates a PopUp
-            # object and initializes lists for objects, entities, and others. Additionally, it sets up
-            # a camera position and defines a white color tuple.
-            pygame.init()
-            self.screen_width:int = 800
-            self.screen_height:int = 600
-            self.width:int = self.screen_width
-            self.height:int = self.screen_height
-            self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE, pygame.SCALED)
-            self.start_time = pygame.time.get_ticks()
-            pygame.display.set_caption("Game")
-            self.refresh_rate:int = 60
-            self.pause:bool = False
-            self.developer_mode:bool = True
-            self.popup:bool =False
-            self.popup = PopUp()
-            
-            self.objects=[]
-            self.entitys=[GameObject(800/2, 0, 51, 51, (0,255,0), None,"Block", 5)]#example
-            self.others = []
-
-            self.camera_x:int = 0
-            self.white = (255, 255, 255)
-            self.clock = pygame.time.Clock()
-
-            # The above code is creating an instance of the `SoundManager` class and assigning it to
-            # the `sound` attribute of the current object (assuming this code is inside a class
-            # definition).
+            self.init_window()
+            self.init_state()
+            self.init_ui()
+            self.init_cameras()
             self.sound = SoundManager()
-            
-            # The above code snippet is setting up camera objects for a game or simulation. It creates
-            # a `Camera` object and a `FreeCamera` object with the specified screen width and height.
-            # It then sets the `current_camera` to be the `Camera` object and initializes a boolean
-            # variable `free_camera_mode` to `False`. This code suggests that the program has two
-            # camera modes - a regular camera mode and a free camera mode, with the ability to switch
-            # between them.
-            self.camera = Camera(self.screen_width, self.screen_height)
-            self.free_camera = FreeCamera(self.screen_width, self.screen_height)
-            self.current_camera = self.camera
-            self.free_camera_mode:bool = False
+            self.engine_physics = PhysicsEngine()
+        except Exception as e:
+            self.handle_exception("constructor", e)
 
-            # The above code snippet is written in Python and it seems to be defining some boolean
-            # variables and initializing them to False. These variables are `show_menu`, `show_fps`,
-            # `hitboxes`, `variable2`, and `fullscreen`. Additionally, a font object is created using
-            # `pygame.font.Font` with a font size of 36.
-            self.show_menu:bool = False
-            self.show_fps:bool = False
-            self.hitboxes:bool = False
-            self.variable2:bool = False
-            self.font = pygame.font.Font(None, 36)
-            self.fullscreen:bool = False
+    def init_window(self):
+        pygame.init()
+        self.screen_width, self.screen_height = 800, 600
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE, pygame.SCALED)
+        pygame.display.set_caption("Game")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 36)
+        self.BLACK = (0, 0, 0)
 
-            # The above code snippet in Python is defining a class attribute `BLACK` with the RGB
-            # value (0, 0, 0), which represents the color black. It is also defining another attribute
-            # `images` as a tuple containing two file paths to image files. Finally, it is creating an
-            # instance of the `Parallax` class with the specified images and the `screen` attribute of
-            # the current object.
-            self.BLACK = (0,0,0)
-            self.images=("textures\\background\\background_layer1.png","textures\\background\\background_layer1.png")
-            self.fore = Parallax(self.images, self.screen)
+    def init_state(self):
+        self.refresh_rate = 60
+        self.pause = False
+        self.developer_mode = True
+        self.popup = PopUp()
+        self.objects = []
+        self.entitys = [GameObject(self.screen_width/2, 0, 51, 51, (0,255,0), None, "Block", 5)]
+        self.others = []
+        self.camera_x = 0
+        self.fullscreen = False
+        self.show_menu = False
+        self.show_fps = False
+        self.hitboxes = False
+        self.variable2 = False
 
-            # The above code is creating a list of UI elements for a graphical user interface (GUI) in
-            # a Python application. The UI elements include TextInput, TextBlock, and Button objects
-            # with various properties such as position, size, text content, font size, colors, element
-            # IDs, JSON file paths, draggability, and types. These elements are being initialized with
-            # specific configurations to be displayed on the GUI interface.
-            self.ui_elements=[TextInput(
+    def init_ui(self):
+        self.ui_elements = [
+            TextInput(
                 text="",
                 position=(50, 50),
                 font_size=20,
@@ -131,16 +98,20 @@ class Game:
                         draggable=self.developer_mode,
                         type="menu"
                     ),
-            Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode,type="menu")]
-            
-            # The above code is creating an instance of a `PhysicsEngine` class and assigning it to
-            # the `engine_physics` attribute of the current object (assuming this code is inside a
-            # class definition).
-            self.engine_physics = PhysicsEngine()
-        except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error en constructor:{e.args} {l}")
-            
+            Button(50,50,100,50,"boton","data/positions.json", opacity=255,text="Hola", text_color=(0,0,0), action=lambda:self.popup.activate("a"),draggable=self.developer_mode,type="menu")
+        ]
+
+    def init_cameras(self):
+        self.camera = Camera(self.screen_width, self.screen_height)
+        self.free_camera = FreeCamera(self.screen_width, self.screen_height)
+        self.current_camera = self.camera
+        self.free_camera_mode = False
+
+    def handle_exception(self, context, e):
+        l = traceback.format_exc()
+        print(f"Error in {context}: {e} {l}")
+        self.popup.activate(f"Error en {context}: {e} {l}")
+
     def method_requires_argument(self,method, arg_name):
         sig = inspect.signature(method)
         return arg_name in sig.parameters
@@ -170,8 +141,7 @@ class Game:
                 elif self.width - 150 <= mouse_x <= self.width and 300 <= mouse_y <= 420:
                     self.show_fps = not self.show_fps
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'handle_menu_click' func, more details:{e} {l}")
+            self.handle_exception("run", e)
                         
     def can_view(self, x, y, object_width, object_height):
         try:
@@ -184,8 +154,7 @@ class Game:
             return (object_right > 0 and object_left < w and
                     object_bottom > 0 and object_top < h)
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'can_view' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def toggle_free_camera(self):
         try:
             if isinstance(self.current_camera, FreeCamera):
@@ -195,8 +164,7 @@ class Game:
                 self.current_camera = self.free_camera
                 self.current_camera.set_target(None)
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+            self.handle_exception("run", e)
 
     def load_map(self, filename):
         try:
@@ -240,8 +208,7 @@ class Game:
             ]
             self.background = pygame.transform.scale(self.background_images[0], (self.screen_width, self.screen_height))
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+            self.handle_exception("run", e)
             
     def reescale(self)->None:
         try:
@@ -277,8 +244,7 @@ class Game:
                 element.rect.height *= scale_y
 
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'reescale' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def donwscale(self)->None:
         try:
             scale_x = self.screen_width / 1360
@@ -319,8 +285,7 @@ class Game:
                 element.rect.height /= scale_y
 
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'downscale' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def handle_events(self, event)->None:
         try:
             if event.type == pygame.VIDEORESIZE:
@@ -351,8 +316,7 @@ class Game:
                         else:
                             element.handle_event(event)
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def draw_menu(self)->None:
         try:
             self.width, self.height = self.screen.get_size()  # Actualiza las dimensiones de la ventana
@@ -378,33 +342,27 @@ class Game:
             fps_text = self.font.render("Show FPS", True, self.BLACK)
             self.screen.blit(fps_text, (self.width - 140, 290))
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'draw_menu' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def run(self):
         try:
             self.reescale()
             running = True
-            chat = ""
-            print(len(self.objects))
             while running:
-                dt = self.clock.tick(60) / 1000 #Utilizar para obtener un movimiento independientemente de la velocidad de los fotogramas
+                dt = self.clock.tick(60) / 1000
                 self.render()
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
                     self.handle_events(event)
                 keys = pygame.key.get_pressed()
-                self.fore.update(keys)
+                #self.fore.update(keys) nose porque da un error
                 if not self.pause:
                     self.update(keys, event)
-                    #######################
-                    # Todo codigo aqui, la logica principal debe ir aqui
                 self.clock.tick(self.refresh_rate)
-
             pygame.quit()
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'run' func, more details:{e} {l}")
+            self.handle_exception("run", e)
+
     def draw_rects_and_lines(self,screen, obj, camera):
         color = (255, 255, 255) 
 
@@ -414,7 +372,7 @@ class Game:
 
     def draw_objects(self):
         try:
-            chunk_size =100
+            chunk_size = 100
 
             start_index = max(0, int(self.current_camera.x / 50) - chunk_size)
             end_index = min(len(self.objects), int((self.current_camera.x + self.screen_width) / 50) + chunk_size)
@@ -429,9 +387,7 @@ class Game:
                 if self.hitboxes:self.draw_rects_and_lines(self.screen, entity, self.current_camera)
 
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'draw_objects' func, more details:{e} {l}")
-            print(f"{e} {l}")
+            self.handle_exception("run", e)
     def update_visuals(self):
         try:
 
@@ -457,8 +413,7 @@ class Game:
                 other.draw(self.screen)
             pygame.display.update()
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'update_visuals' func, more details:{e} {l}")
+            self.handle_exception("run", e)
 
     def update(self, keys, event):
         try:
@@ -471,16 +426,14 @@ class Game:
             if self.current_camera.y >= -105:
                 self.current_camera.y = -105
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'update' func, more details:{e} {l}")
+            self.handle_exception("run", e)
     def render(self):
         try:
             self.screen.fill((0,0,0))
             self.update_visuals()
             pygame.display.flip()
         except Exception as e:
-            l=traceback.format_exc()
-            self.popup.activate(f"Error in 'render' func., more details:{e} {l}")
+            self.handle_exception("run", e)
 if __name__ == "__main__":
     game = Game()
     game.load_map("sources/map.txt")
